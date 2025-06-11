@@ -1,11 +1,16 @@
 'use client'
 
+import { Permission, UserRole } from '@/types/auth'
+
 export interface MenuItem {
   id: string;
   label: string;
   icon: string;
   path: string;
   children?: MenuItem[];
+  requiredPermissions?: Permission[];
+  allowedRoles?: UserRole[];
+  adminOnly?: boolean;
 }
 
 export interface DashboardCard {
@@ -15,6 +20,7 @@ export interface DashboardCard {
   icon: string;
   path: string;
   category?: string;
+  [key: string]: unknown;
 }
 
 export interface ServiceCategory {
@@ -24,9 +30,9 @@ export interface ServiceCategory {
   icon: string;
   path: string;
   serviceCount: number;
+  [key: string]: unknown;
 }
 
-//sidebar 
 export const menuItems: MenuItem[] = [
   {
     id: 'inicio',
@@ -39,6 +45,28 @@ export const menuItems: MenuItem[] = [
     label: 'RELATÓRIOS',
     icon: 'assessment',
     path: '/relatorios',
+    requiredPermissions: [Permission.READ_REPORTS],
+  },
+  {
+    id: 'admin-dashboard',
+    label: 'PAINEL ADMIN',
+    icon: 'admin_panel_settings',
+    path: '/admin/dashboard',
+    allowedRoles: [UserRole.ADMIN, UserRole.DEVS],
+  },
+  {
+    id: 'usuarios',
+    label: 'USUÁRIOS',
+    icon: 'people',
+    path: '/admin/usuarios',
+    requiredPermissions: [Permission.MANAGE_USERS],
+  },
+  {
+    id: 'permissoes',
+    label: 'PERMISSÕES',
+    icon: 'security',
+    path: '/admin/permissoes',
+    requiredPermissions: [Permission.MANAGE_PERMISSIONS],
   },
   {
     id: 'configuracoes',
@@ -48,7 +76,38 @@ export const menuItems: MenuItem[] = [
   },
 ];
 
-// Categorias principais do dashboard
+export const getFilteredMenuItems = (
+  userPermissions: Permission[] = [],
+  userRole?: UserRole
+): MenuItem[] => {
+  return menuItems.filter(item => {
+    if (!item.requiredPermissions && !item.allowedRoles && !item.adminOnly) {
+      return true;
+    }
+
+    if (item.adminOnly && userRole !== UserRole.ADMIN) {
+      return false;
+    }
+
+    if (item.allowedRoles && userRole) {
+      if (!item.allowedRoles.includes(userRole)) {
+        return false;
+      }
+    }
+
+    if (item.requiredPermissions) {
+      const hasRequiredPermission = item.requiredPermissions.some(permission =>
+        userPermissions.includes(permission)
+      );
+      if (!hasRequiredPermission) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+};
+
 export const serviceCategories: ServiceCategory[] = [
   {
     id: 'bancario',
@@ -92,7 +151,6 @@ export const serviceCategories: ServiceCategory[] = [
   },
 ];
 
-// Todos os serviços organizados por categoria
 export const dashboardCardsByCategory = {
   bancario: [
     {
@@ -302,4 +360,11 @@ export const dashboardCardsByCategory = {
   ],
 };
 
-export const dashboardCards: DashboardCard[] = serviceCategories;
+export const dashboardCards: DashboardCard[] = serviceCategories.map(category => ({
+  id: category.id,
+  title: category.title,
+  subtitle: category.subtitle,
+  icon: category.icon,
+  path: category.path,
+  category: category.id
+}));

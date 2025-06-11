@@ -2,22 +2,32 @@
 import React, { useState, useMemo } from 'react'
 import DashboardCard from '@/components/molecules/DashboardCard/DashboardCard'
 import Navigation from '@/components/atoms/Navigation/Navigation'
-
-import { serviceCategories, dashboardCardsByCategory } from '@/data/dashboard'
-
+import { serviceCategories, dashboardCardsByCategory, DashboardCard as DashboardCardType } from '@/data/dashboard'
 import Button from '@/components/atoms/Button/Button'
 import { Fade } from '@mui/material'
+
+import EmptyState from '@/components/atoms/EmptyStates/EmptyState'
 import { searchAllServices } from '@/utils/searchUtils'
 import SearchSection from '@/components/molecules/SearchSection/SeachSection'
-import EmptyState from '@/components/atoms/EmptyStates/EmptyState'
+import { 
+  canAccessCategory,
+  filterCategoriesByPermissions,
+  filterServicesByPermissions,
+  getRequiredPermissionsForAction} from '@/utils/dashBoardPermissions'
+import { useAuth } from '@/contexts/AuthContext'
+import { RouteGuard, PermissionGuard } from '@/components/template/RouteGuard/RouteGuard'
+import { Permission } from '@/types/auth'
 
 export const Dashboard: React.FC = () => {
   const [currentCategory, setCurrentCategory] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
+  const { user } = useAuth();
+
   const handleCategoryClick = (categoryId: string) => {
-    setCurrentCategory(categoryId)
-    setSearchQuery('')
+    if(canAccessCategory(categoryId, user?.permissions || [])) {
+      setCurrentCategory(categoryId)
+      setSearchQuery('')}
   }
 
   const handleBackToMain = () => {
@@ -38,7 +48,7 @@ export const Dashboard: React.FC = () => {
 
   const getNavigationItems = () => {
     if (!currentCategory) {
-      return [{ label: 'Bem-vindo(a), fulano', isActive: true }]
+      return [{ label: `Bem-vindo(a), ${user?.name}`, isActive: true }]
     }
     
     const category = serviceCategories.find(cat => cat.id === currentCategory)
@@ -52,10 +62,19 @@ export const Dashboard: React.FC = () => {
     const isSearching = searchQuery.trim().length > 0
     const isMainViewCalc = currentCategory === null
     
-    let data
+    let data: DashboardCardType[] = []
     
     if (isSearching && currentCategory === null) {
-      data = searchAllServices(searchQuery)
+      const allResults = searchAllServices(searchQuery)
+      const filteredResults = filterServicesByPermissions(allResults, user?.permissions || [])
+      data = filteredResults.map(service => ({
+        id: service.id,
+        title: service.title as string,
+        subtitle: service.subtitle as string,
+        icon: service.icon as string,
+        path: service.path as string,
+        category: service.category
+      }))
     } else if (isSearching && currentCategory) {
       const categoryServices = dashboardCardsByCategory[currentCategory as keyof typeof dashboardCardsByCategory] || []
       data = categoryServices.filter(service => {
@@ -66,7 +85,15 @@ export const Dashboard: React.FC = () => {
     } else if (currentCategory) {
       data = dashboardCardsByCategory[currentCategory as keyof typeof dashboardCardsByCategory] || []
     } else {
-      data = serviceCategories
+      const categories = filterCategoriesByPermissions(serviceCategories, user?.permissions || [])
+      data = categories.map(category => ({
+        id: category.id,
+        title: category.title,
+        subtitle: category.subtitle,
+        icon: category.icon,
+        path: category.path,
+        category: category.id
+      }))
     }
 
     return {
@@ -74,7 +101,7 @@ export const Dashboard: React.FC = () => {
       isMainView: isMainViewCalc,
       isSearchMode: isSearching
     }
-  }, [searchQuery, currentCategory])
+  }, [searchQuery, currentCategory, user?.permissions])
 
   const getPageTitle = () => {
     if (isMainView) {
@@ -106,7 +133,8 @@ export const Dashboard: React.FC = () => {
   }
 
   return (
-    <div data-testid="dashboard-container" className="p-8 bg-ksiBeige min-h-screen">
+    <RouteGuard requiredPermissions={[Permission.READ_DASHBOARD]}>
+    <div data-testid="dashboard-container" className="p-4 sm:p-8 bg-ksiBeige min-h-screen">
       <div className="max-w-7xl mx-auto">
         
         <SearchSection
@@ -119,49 +147,60 @@ export const Dashboard: React.FC = () => {
 
         <Navigation items={getNavigationItems()} />
         
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-2xl font-medium text-black">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 sm:mb-8 gap-4 lg:gap-0">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-medium text-black break-words">
               {getPageTitle()}
             </h1>
             {getPageSubtitle() && (
-              <p className="text-gray-600 mt-1 text-sm">
+              <p className="text-gray-600 mt-1 text-sm break-words">
                 {getPageSubtitle()}
               </p>
             )}
           </div>
           
-          <div data-testid="buttons-container" className="flex space-x-3">
+          <div data-testid="buttons-container" className="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:flex-shrink-0">
             {!isMainView && (
+              
               <Button
                 variant="secondary"
                 size="small"
                 startIcon={<span className="material-icons text-[20px]">arrow_back</span>}
                 onClick={handleBackToMain}
+                className="w-full sm:w-auto"
               >
                 Voltar
               </Button>
             )}
-            <Button
-              variant="secondary"
-              size="small"
-              startIcon={<span className="material-icons text-[20px]">add_circle</span>}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <PermissionGuard
+              requiredPermissions={getRequiredPermissionsForAction('new_consultation')}
+              mode="any"
             >
-              Nova Consulta
-            </Button>
-            <Button
-              variant="primary"
-              size="small"
-            >
-              Ver Histórico
-            </Button>
+              <Button
+                variant="secondary"
+                size="small"
+                startIcon={<span className="material-icons text-[20px]">add_circle</span>}
+                className="w-full sm:w-auto"
+              >
+                Nova Consulta
+              </Button>
+              <Button
+                variant="primary"
+                size="small"
+                className="w-full sm:w-auto"
+              >
+                Ver Histórico
+              </Button>
+              </PermissionGuard>
+            </div>
           </div>
         </div>
 
         {/* resultado */}
         <Fade in={true} timeout={300}>
-          <div 
-            data-testid="dashboard-grid" 
+          <div
+            data-testid="dashboard-grid"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
           >
             {currentData.map((card) => (
@@ -174,7 +213,6 @@ export const Dashboard: React.FC = () => {
           </div>
         </Fade>
 
-        {/* caso não ache */}
         {currentData.length === 0 && (
           <EmptyState
             icon={getEmptyStateMessage().icon}
@@ -187,6 +225,7 @@ export const Dashboard: React.FC = () => {
         )}
       </div>
     </div>
+    </RouteGuard>
   )
 }
 

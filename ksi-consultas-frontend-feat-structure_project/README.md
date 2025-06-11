@@ -100,15 +100,33 @@ O projeto segue os princípios da **Arquitetura Atômica**, organizando componen
 - **Organisms:** Componentes complexos (header, sidebar, grid de serviços)
 - **Templates:** Estruturas de página reutilizáveis
 
-## 📚 Saiba Mais
+## 🔐 Autenticação
 
-Para saber mais sobre Next.js, consulte os seguintes recursos:
+### Interface de Login
+Sistema de autenticação com design moderno e responsivo, apresentando layout dividido em duas seções:
+- **Lateral esquerda:** Área de boas-vindas com branding KSI (desktop)
+- **Lateral direita:** Formulário de login centralizado
 
-- [Documentação do Next.js](https://nextjs.org/docs) - aprenda sobre os recursos e API do Next.js
-- [Aprenda Next.js](https://nextjs.org/learn) - um tutorial interativo do Next.js
+### Recursos de Segurança
+- **Validação em tempo real** com feedback visual
+- **Campos tipados** (email, password) com ícones contextuais
+- **Toggle de visibilidade** para senhas
+- **Estados de loading** durante autenticação
+- **Persistência de sessão** via localStorage
 
-## 🚀 Deploy
+### Credenciais de Demonstração
+```
+Administrador: admin@ksiconsultas.com / 123456
+Usuário Padrão: user@ksi.com / 123456
+```
 
-A maneira mais fácil de fazer deploy da sua aplicação Next.js é usar a [Plataforma Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) dos criadores do Next.js.
+### Arquitetura do Login
+- **Atoms:** `InputField` (campo reutilizável com validação)
+- **Molecules:** `LoginForm` + `LoginWelcome`
+- **Template:** `LoginPage` (lógica de autenticação)
+- **Context:** `AuthContext` (gerenciamento de estado global)
 
-Consulte a [documentação de deploy do Next.js](https://nextjs.org/docs/app/building-your-application/deploying) para mais detalhes.
+### Responsividade
+- **Desktop (≥768px):** Layout completo com lateral de boas-vindas
+- **Mobile (<768px):** Apenas formulário centralizado
+- **Transições suaves** entre breakpoints

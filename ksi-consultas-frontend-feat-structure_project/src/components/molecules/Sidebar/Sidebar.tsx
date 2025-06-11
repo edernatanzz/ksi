@@ -1,9 +1,11 @@
 'use client'
-import React from 'react'
+import React, { useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { MenuItem } from '@/data/dashboard'
 import Image from 'next/image'
+import { useAuth } from '@/contexts/AuthContext'
+import { UserRole } from '@/types/auth'
 
 interface SidebarProps {
   menuItems: MenuItem[]
@@ -13,6 +15,41 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ menuItems, isOpen, onClose }) => {
   const pathname = usePathname()
+  const {logout, user } = useAuth();
+
+  const filtrarItens = useMemo(() => {
+    if(!user) return menuItems;
+    return menuItems.filter(item => {
+      if (!item.requiredPermissions && !item.allowedRoles && !item.adminOnly) {
+        return true
+      }
+
+      if (item.adminOnly && user.role !== UserRole.ADMIN) {
+        return false
+      }
+
+      if (item.allowedRoles && !item.allowedRoles.includes(user.role)) {
+        return false
+      }
+
+      if (item.requiredPermissions) {
+        const hasRequiredPermission = item.requiredPermissions.some(permission =>
+          user.permissions.includes(permission)
+        )
+        if (!hasRequiredPermission) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }, [menuItems, user])
+
+  const handleLogout = (e : React.MouseEvent) => {
+    e.preventDefault();
+      logout();
+      onClose();
+  }
 
   return (
     <>
@@ -54,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ menuItems, isOpen, onClose }) 
           {/* Menu Items */}
           <nav className="flex-1 px-3">
             <ul className="space-y-1 list-none">
-              {menuItems.map((item) => {
+              {filtrarItens.map((item) => {
                 const isActive = pathname === item.path
                 return (
                   <li key={item.id}>
@@ -87,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ menuItems, isOpen, onClose }) 
           <div className="mt-auto border-t border-gray-700 px-3 pt-3">
             <Link
               href="#"
-              onClick={onClose}
+              onClick={handleLogout}
               className="flex items-center px-3 py-4 text-sm font-medium text-gray-300 hover:bg-[#1a2733] hover:text-white no-underline transition-all duration-200 rounded-lg"
             >
               <span className="material-icons mr-4 text-[20px] text-gray-400">

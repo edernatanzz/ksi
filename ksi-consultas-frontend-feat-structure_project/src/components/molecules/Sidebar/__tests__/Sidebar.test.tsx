@@ -1,127 +1,350 @@
-// // Sidebar.test.tsx
-// import { render, screen } from '@testing-library/react'
-// import { describe, it, expect, vi, Mock } from 'vitest'
-// import { usePathname } from 'next/navigation'
-// import { MenuItem } from '@/data/dashboard'
-// import Sidebar from '../Sidebar'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { usePathname } from 'next/navigation'
+import { Sidebar } from '@/components/molecules/Sidebar/Sidebar'
+import { useAuth } from '@/contexts/AuthContext'
+import { MenuItem } from '@/data/dashboard'
 
-// // Mock do next/navigation
-// vi.mock('next/navigation', () => ({
-//   usePathname: vi.fn(),
-// }))
+interface MockLinkProps {
+  children: React.ReactNode
+  href: string
+  onClick?: (event: React.MouseEvent) => void
+  className?: string
+}
 
-// // Mock do next/image
-// vi.mock('next/image', () => ({
-//   default: (props: any) => <img {...props} />,
-// }))
+interface MockImageProps {
+  src: string
+  alt: string
+  className?: string
+}
 
-// describe('Sidebar Component', () => {
-//   const mockMenuItems: MenuItem[] = [
-//     {
-//       id: '1',
-//       label: 'Dashboard',
-//       path: '/dashboard',
-//       icon: 'dashboard',
-//     },
-//     {
-//       id: '2',
-//       label: 'Usuários',
-//       path: '/users',
-//       icon: 'people',
-//     },
-//   ]
+// Mocks
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn(),
+}))
 
-//   it('When rendered, then it should display logo and menu items', () => {
-//     // Arrange
-//     ;(usePathname as Mock).mockReturnValue('/other-route')
-    
-//     // Act
-//     render(<Sidebar menuItems={mockMenuItems} />)
-    
-//     // Assert
-//     expect(screen.getByAltText('Logo')).toBeInTheDocument()
-//     expect(screen.getByText('Dashboard')).toBeInTheDocument()
-//     expect(screen.getByText('Usuários')).toBeInTheDocument()
-//     expect(screen.getByText('SAIR')).toBeInTheDocument()
-//   })
+vi.mock('next/link', () => ({
+  default: ({ children, href, onClick, className }: MockLinkProps) => (
+    <a href={href} onClick={onClick} className={className}>
+      {children}
+    </a>
+  ),
+}))
 
-//   it('When current path matches menu item path, then it should highlight active item', () => {
-//     // Arrange
-//     ;(usePathname as Mock).mockReturnValue('/dashboard')
-    
-//     // Act
-//     render(<Sidebar menuItems={mockMenuItems} />)
-//     const activeItem = screen.getByText('Dashboard').closest('a')
-//     const inactiveItem = screen.getByText('Usuários').closest('a')
-    
-//     // Assert
-//     expect(activeItem).toHaveClass('bg-[#e02725]')
-//     expect(inactiveItem).not.toHaveClass('bg-[#e02725]')
-//     expect(inactiveItem).toHaveClass('text-gray-300')
-//   })
+vi.mock('next/image', () => ({
+  default: ({ src, alt, className }: MockImageProps) => (
+    <div data-testid="mock-image" data-src={src} data-alt={alt} className={className}>
+      {alt}
+    </div>
+  ),
+}))
 
-//   it('When menu item is hovered, then it should change style', () => {
-//     // Arrange
-//     ;(usePathname as vi.Mock).mockReturnValue('/other-route')
-    
-//     // Act
-//     render(<Sidebar menuItems={mockMenuItems} />)
-//     const menuItem = screen.getByText('Dashboard').closest('a')
-    
-//     // Assert
-//     expect(menuItem).toHaveClass('hover:bg-[#1a2733]')
-//     expect(menuItem).toHaveClass('hover:text-white')
-//   })
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: vi.fn(),
+}))
 
-//   it('When logo is rendered, then it should have correct attributes', () => {
-//     // Arrange
-//     ;(usePathname as vi.Mock).mockReturnValue('/other-route')
-    
-//     // Act
-//     render(<Sidebar menuItems={mockMenuItems} />)
-//     const logo = screen.getByAltText('Logo')
-    
-//     // Assert
-//     expect(logo).toHaveAttribute('src', '/favicon.ico')
-//     expect(logo).toHaveAttribute('width', '48')
-//     expect(logo).toHaveAttribute('height', '48')
-//   })
+const mockUsePathname = vi.mocked(usePathname)
+const mockUseAuth = vi.mocked(useAuth)
 
-//   it('When logout button is rendered, then it should have correct styles', () => {
-//     // Arrange
-//     ;(usePathname as vi.Mock).mockReturnValue('/other-route')
-    
-//     // Act
-//     render(<Sidebar menuItems={mockMenuItems} />)
-//     const logoutButton = screen.getByText('SAIR').closest('a')
-    
-//     // Assert
-//     expect(logoutButton).toHaveClass('text-gray-300')
-//     expect(logoutButton).toHaveClass('hover:bg-[#1a2733]')
-//     expect(logoutButton).toHaveClass('hover:text-white')
-//   })
+describe('Sidebar Component', () => {
+  // Arrange - Setup comum
+  const mockLogout = vi.fn()
+  const mockOnClose = vi.fn()
+  
+  const mockMenuItems: MenuItem[] = [
+    { id: '1', label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
+    { id: '2', label: 'Users', path: '/users', icon: 'people' },
+    { id: '3', label: 'Settings', path: '/settings', icon: 'settings' },
+  ]
 
-//   it('When icon is active, then it should be white', () => {
-//     // Arrange
-//     ;(usePathname as vi.Mock).mockReturnValue('/dashboard')
-    
-//     // Act
-//     render(<Sidebar menuItems={mockMenuItems} />)
-//     const activeIcon = screen.getByText('dashboard').closest('span')
-    
-//     // Assert
-//     expect(activeIcon).toHaveClass('text-white')
-//   })
+  const defaultProps = {
+    menuItems: mockMenuItems,
+    isOpen: true,
+    onClose: mockOnClose,
+  }
 
-//   it('When icon is inactive, then it should be red', () => {
-//     // Arrange
-//     ;(usePathname as vi.Mock).mockReturnValue('/other-route')
-    
-//     // Act
-//     render(<Sidebar menuItems={mockMenuItems} />)
-//     const inactiveIcon = screen.getByText('dashboard').closest('span')
-    
-//     // Assert
-//     expect(inactiveIcon).toHaveClass('text-[#e02725]')
-//   })
-// })
+  beforeEach(() => {
+    mockUseAuth.mockReturnValue({
+      logout: mockLogout,
+    })
+    mockUsePathname.mockReturnValue('/dashboard')
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+  })
+
+  describe('When sidebar is open', () => {
+    it('When sidebar is open, then should display all menu items', () => {
+      // Arrange
+      const props = { ...defaultProps, isOpen: true }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      expect(screen.getByText('Dashboard')).toBeInTheDocument()
+      expect(screen.getByText('Users')).toBeInTheDocument()
+      expect(screen.getByText('Settings')).toBeInTheDocument()
+    })
+
+    it('When sidebar is open, then should display logo', () => {
+      // Arrange
+      const props = { ...defaultProps, isOpen: true }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      const logo = screen.getByTestId('mock-image')
+      expect(logo).toBeInTheDocument()
+      expect(logo).toHaveAttribute('data-src', '/favicon.ico')
+      expect(logo).toHaveAttribute('data-alt', 'Logo')
+    })
+
+    it('When sidebar is open, then should display close button on mobile', () => {
+      // Arrange
+      const props = { ...defaultProps, isOpen: true }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      const closeButton = screen.getByText('close')
+      expect(closeButton).toBeInTheDocument()
+    })
+
+    it('When sidebar is open, then should display logout button', () => {
+      // Arrange
+      const props = { ...defaultProps, isOpen: true }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      expect(screen.getByText('SAIR')).toBeInTheDocument()
+      expect(screen.getByText('logout')).toBeInTheDocument()
+    })
+  })
+
+  describe('When sidebar is closed', () => {
+    it('When sidebar is closed, then should apply hidden transform class', () => {
+      // Arrange
+      const props = { ...defaultProps, isOpen: false }
+
+      // Act
+      const { container } = render(<Sidebar {...props} />)
+
+      // Assert
+      const sidebar = container.querySelector('.fixed.top-0.left-0')
+      expect(sidebar).toHaveClass('-translate-x-full')
+    })
+
+    it('When sidebar is closed, then should not display overlay', () => {
+      // Arrange
+      const props = { ...defaultProps, isOpen: false }
+
+      // Act
+      const { container } = render(<Sidebar {...props} />)
+
+      // Assert
+      const overlay = container.querySelector('.bg-black.bg-opacity-50')
+      expect(overlay).not.toBeInTheDocument()
+    })
+  })
+
+  describe('When active menu item is highlighted', () => {
+    it('When current path matches menu item, then should highlight active item', () => {
+      // Arrange
+      mockUsePathname.mockReturnValue('/users')
+      const props = { ...defaultProps }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      const activeLink = screen.getByText('Users').closest('a')
+      expect(activeLink).toHaveClass('bg-[#e02725]', 'text-white')
+    })
+
+    it('When current path does not match menu item, then should not highlight item', () => {
+      // Arrange
+      mockUsePathname.mockReturnValue('/dashboard')
+      const props = { ...defaultProps }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      const inactiveLink = screen.getByText('Users').closest('a')
+      expect(inactiveLink).toHaveClass('text-gray-300')
+      expect(inactiveLink).not.toHaveClass('bg-[#e02725]')
+    })
+  })
+
+  describe('When user interactions occur', () => {
+    it('When close button is clicked, then should call onClose', () => {
+      // Arrange
+      const props = { ...defaultProps }
+
+      // Act
+      render(<Sidebar {...props} />)
+      const closeButton = screen.getByText('close')
+      fireEvent.click(closeButton)
+
+      // Assert
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    it('When overlay is clicked, then should call onClose', () => {
+      // Arrange
+      const props = { ...defaultProps, isOpen: true }
+
+      // Act
+      const { container } = render(<Sidebar {...props} />)
+      const overlay = container.querySelector('.bg-black.bg-opacity-50')!
+      fireEvent.click(overlay)
+
+      // Assert
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    it('When menu item is clicked, then should call onClose', () => {
+      // Arrange
+      const props = { ...defaultProps }
+
+      // Act
+      render(<Sidebar {...props} />)
+      const menuLink = screen.getByText('Dashboard').closest('a')!
+      fireEvent.click(menuLink)
+
+      // Assert
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    it('When logout button is clicked, then should call logout and onClose', () => {
+      // Arrange
+      const props = { ...defaultProps }
+
+      // Act
+      render(<Sidebar {...props} />)
+      const logoutButton = screen.getByText('SAIR').closest('a')!
+      fireEvent.click(logoutButton)
+
+      // Assert
+      expect(mockLogout).toHaveBeenCalledTimes(1)
+      expect(mockOnClose).toHaveBeenCalledTimes(1)
+    })
+
+    it('When logout click event is prevented, then should prevent default behavior', () => {
+      // Arrange
+      const props = { ...defaultProps }
+      const preventDefault = vi.fn()
+
+      // Act
+      render(<Sidebar {...props} />)
+      const logoutButton = screen.getByText('SAIR').closest('a')!
+      fireEvent.click(logoutButton, { preventDefault })
+
+      // Assert
+      expect(mockLogout).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('When menu items are rendered', () => {
+    it('When menu items have icons, then should display correct icons', () => {
+      // Arrange
+      const props = { ...defaultProps }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      expect(screen.getByText('dashboard')).toBeInTheDocument()
+      expect(screen.getByText('people')).toBeInTheDocument()
+      expect(screen.getByText('settings')).toBeInTheDocument()
+    })
+
+    it('When menu items have paths, then should render correct href attributes', () => {
+      // Arrange
+      const props = { ...defaultProps }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      const dashboardLink = screen.getByText('Dashboard').closest('a')
+      const usersLink = screen.getByText('Users').closest('a')
+      const settingsLink = screen.getByText('Settings').closest('a')
+
+      expect(dashboardLink).toHaveAttribute('href', '/dashboard')
+      expect(usersLink).toHaveAttribute('href', '/users')
+      expect(settingsLink).toHaveAttribute('href', '/settings')
+    })
+  })
+
+  describe('When sidebar styling is applied', () => {
+    it('When sidebar is rendered, then should have correct base classes', () => {
+      // Arrange
+      const props = { ...defaultProps }
+
+      // Act
+      const { container } = render(<Sidebar {...props} />)
+
+      // Assert
+      const sidebar = container.querySelector('.fixed.top-0.left-0')
+      expect(sidebar).toHaveClass(
+        'fixed',
+        'top-0',
+        'left-0',
+        'h-full',
+        'w-[275px]',
+        'z-50',
+        'transform',
+        'transition-transform',
+        'duration-300',
+        'ease-in-out'
+      )
+    })
+
+    it('When sidebar content is rendered, then should have correct background', () => {
+      // Arrange
+      const props = { ...defaultProps }
+
+      // Act
+      const { container } = render(<Sidebar {...props} />)
+
+      // Assert
+      const sidebarContent = container.querySelector('.bg-\\[\\#0e1a25\\]')
+      expect(sidebarContent).toHaveClass('bg-[#0e1a25]', 'text-white')
+    })
+  })
+
+  describe('When empty menu items are provided', () => {
+    it('When menuItems array is empty, then should render sidebar without menu items', () => {
+      // Arrange
+      const props = { ...defaultProps, menuItems: [] }
+
+      // Act
+      render(<Sidebar {...props} />)
+
+      // Assert
+      expect(screen.getByText('SAIR')).toBeInTheDocument()
+      expect(screen.queryByText('Dashboard')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('When authentication context is unavailable', () => {
+    it('When useAuth returns undefined logout, then should handle gracefully', () => {
+      // Arrange
+      mockUseAuth.mockReturnValue({
+        logout: undefined as unknown as () => void,
+      })
+      const props = { ...defaultProps }
+
+      // Act & Assert
+      expect(() => render(<Sidebar {...props} />)).not.toThrow()
+    })
+  })
+})

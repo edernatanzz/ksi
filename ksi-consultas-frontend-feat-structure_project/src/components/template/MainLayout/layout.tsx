@@ -3,11 +3,13 @@ import React, { useState } from 'react'
 import { menuItems } from '@/data/dashboard'
 import Sidebar from '@/components/molecules/Sidebar/Sidebar'
 import { useAuth } from '@/contexts/AuthContext'
+import LoginPage from '../LoginPage/LoginPage'
 
 interface MainLayoutProps {
   children: React.ReactNode
 }
 
+// Atom - Mobile Header
 const MobileHeader: React.FC<{
   onMenuClick: () => void
 }> = ({ onMenuClick }) => (
@@ -25,32 +27,6 @@ const MobileHeader: React.FC<{
     <div className="w-10"></div>
   </div>
 )
-
-// Atom - Login Screen
-const LoginScreen: React.FC = () => {
-  const { login } = useAuth()
-  
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            KSI Sistema
-          </h2>
-          <p className="text-gray-600 mb-8">
-            Faça login para acessar o sistema
-          </p>
-          <button
-            onClick={login}
-            className="w-full py-3 px-4 bg-[#e02725] hover:bg-[#dc2626] text-white font-medium rounded-lg transition-colors"
-          >
-            Login
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // Molecule - Desktop Sidebar Container
 const DesktopSidebar: React.FC = () => (
@@ -128,7 +104,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isAuthenticated } = useAuth()
 
   if (!isAuthenticated) {
-    return <LoginScreen />
+    return <LoginPage />
   }
 
   return <DashboardLayout>{children}</DashboardLayout>

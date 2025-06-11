@@ -1,7 +1,11 @@
-/* import { render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-let serverCallback: (() => any) | null = null
+let serverCallback: (() => unknown) | null = null
+
+interface ProviderProps {
+  children: React.ReactNode
+}
 
 vi.mock('next/navigation', () => ({
   useServerInsertedHTML: vi.fn((callback) => {
@@ -21,11 +25,11 @@ vi.mock('@emotion/cache', () => ({
 }))
 
 vi.mock('@emotion/react', () => ({
-  CacheProvider: ({ children }: any) => <div data-testid="cache-provider">{children}</div>
+  CacheProvider: ({ children }: ProviderProps) => <div data-testid="cache-provider">{children}</div>
 }))
 
 vi.mock('@mui/material/styles', () => ({
-  ThemeProvider: ({ children }: any) => <div data-testid="theme-provider">{children}</div>
+  ThemeProvider: ({ children }: ProviderProps) => <div data-testid="theme-provider">{children}</div>
 }))
 
 vi.mock('@mui/material/CssBaseline', () => ({
@@ -158,4 +162,4 @@ describe('ThemeRegistry', () => {
       expect(mockCache.compat).toBe(true)
     })
   })
-}) */
+})
