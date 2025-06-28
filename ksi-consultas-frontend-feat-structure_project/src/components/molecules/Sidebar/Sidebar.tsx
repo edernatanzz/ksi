@@ -2,13 +2,13 @@
 import React, { useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MenuItem } from '@/data/dashboard'
+import { MenuItem, getFilteredMenuItems, getMenuItemsByEnvironment, detectEnvironmentFromPath } from '@/data/dashboard'
 import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserRole } from '@/types/auth'
 
 interface SidebarProps {
-  menuItems: MenuItem[]
+  menuItems?: MenuItem[]
   isOpen: boolean
   onClose: () => void
 }
@@ -18,37 +18,57 @@ export const Sidebar: React.FC<SidebarProps> = ({ menuItems, isOpen, onClose }) 
   const {logout, user } = useAuth();
 
   const filtrarItens = useMemo(() => {
-    if(!user) return menuItems;
-    return menuItems.filter(item => {
-      if (!item.requiredPermissions && !item.allowedRoles && !item.adminOnly) {
-        return true
-      }
-
-      if (item.adminOnly && user.role !== UserRole.ADMIN) {
-        return false
-      }
-
-      if (item.allowedRoles && !item.allowedRoles.includes(user.role)) {
-        return false
-      }
-
-      if (item.requiredPermissions) {
-        const hasRequiredPermission = item.requiredPermissions.some(permission =>
-          user.permissions.includes(permission)
-        )
-        if (!hasRequiredPermission) {
-          return false
+    if(!user) return menuItems || [];
+    
+    // Se menuItems foi passado como prop, use-os (para compatibilidade)
+    if (menuItems) {
+      return getFilteredMenuItems(user.permissions, user.role);
+    }
+    
+    // Caso contrário, detecte o ambiente da URL
+    const environment = detectEnvironmentFromPath(pathname);
+    const environmentMenuItems = getMenuItemsByEnvironment(environment);
+    
+    // Para KSI, aplique filtros de permissão. Para outros ambientes, mostre todos os itens
+    if (environment === 'ksi') {
+      return environmentMenuItems.filter(item => {
+        // Admin KSI tem acesso a TODOS os itens
+        if (user.role === UserRole.ADMIN) {
+          return true;
         }
-      }
 
-      return true
-    })
-  }, [menuItems, user])
+        if (!item.requiredPermissions && !item.allowedRoles && !item.adminOnly) {
+          return true;
+        }
+
+        if (item.adminOnly && (user.role as UserRole) !== UserRole.ADMIN) {
+          return false;
+        }
+
+        if (item.allowedRoles && !item.allowedRoles.includes(user.role)) {
+          return false;
+        }
+
+        if (item.requiredPermissions) {
+          const hasRequiredPermission = item.requiredPermissions.some(permission =>
+            user.permissions.includes(permission)
+          );
+          if (!hasRequiredPermission) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+    }
+    
+    return environmentMenuItems;
+  }, [menuItems, user, pathname])
 
   const handleLogout = (e : React.MouseEvent) => {
     e.preventDefault();
-      logout();
-      onClose();
+    logout();
+    onClose();
   }
 
   return (

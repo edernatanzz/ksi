@@ -1,5 +1,5 @@
-import { Permission } from '@/types/auth';
-import { ServiceCategory } from '@/data/dashboard';
+import { Permission, UserRole } from '@/types/auth';
+import { ServiceCategory, DashboardCard } from '@/data/dashboard';
 
 export const CATEGORY_READ_PERMISSIONS = {
   'bancario': Permission.READ_BANCARIO,
@@ -19,38 +19,50 @@ export const CATEGORY_WRITE_PERMISSIONS = {
 
 export const canAccessCategory = (
   categoryId: string, 
-  userPermissions: Permission[]
+  userPermissions: Permission[],
+  userRole?: UserRole
 ): boolean => {
+  // Admin KSI tem acesso a tudo
+  if (userRole === UserRole.ADMIN) {
+    return true;
+  }
+  
   const requiredPermission = CATEGORY_READ_PERMISSIONS[categoryId as keyof typeof CATEGORY_READ_PERMISSIONS];
   return !requiredPermission || userPermissions.includes(requiredPermission);
 };
 
 export const canEditInCategory = (
   categoryId: string, 
-  userPermissions: Permission[]
+  userPermissions: Permission[],
+  userRole?: UserRole
 ): boolean => {
+  // Admin KSI tem acesso a tudo
+  if (userRole === UserRole.ADMIN) {
+    return true;
+  }
+  
   const requiredPermission = CATEGORY_WRITE_PERMISSIONS[categoryId as keyof typeof CATEGORY_WRITE_PERMISSIONS];
   return !requiredPermission || userPermissions.includes(requiredPermission);
 };
 
 export const filterCategoriesByPermissions = (
   categories: ServiceCategory[], 
-  userPermissions: Permission[]
+  userPermissions: Permission[],
+  userRole?: UserRole
 ): ServiceCategory[] => {
   return categories.filter(category => 
-    canAccessCategory(category.id, userPermissions)
+    canAccessCategory(category.id, userPermissions, userRole)
   );
 };
 
-type ServiceOrDashboardCard = { categoryId?: string; category?: string; id: string; [key: string]: unknown };
-
 export const filterServicesByPermissions = (
-  services: ServiceOrDashboardCard[], 
-  userPermissions: Permission[]
-): ServiceOrDashboardCard[] => {
+  services: DashboardCard[], 
+  userPermissions: Permission[],
+  userRole?: UserRole
+): DashboardCard[] => {
   return services.filter(service => {
-    const categoryId = service.categoryId || service.category || service.id;
-    return canAccessCategory(categoryId, userPermissions);
+    const categoryId = service.category || service.id;
+    return canAccessCategory(categoryId, userPermissions, userRole);
   });
 };
 

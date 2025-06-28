@@ -33,59 +33,178 @@ export interface ServiceCategory {
   [key: string]: unknown;
 }
 
-export const menuItems: MenuItem[] = [
+// Menus específicos por ambiente
+export const ksiMenuItems: MenuItem[] = [
   {
     id: 'inicio',
     label: 'INÍCIO',
     icon: 'home',
-    path: '/',
+    path: '/ksi',
   },
   {
     id: 'relatorios',
     label: 'RELATÓRIOS',
     icon: 'assessment',
-    path: '/relatorios',
+    path: '/ksi/relatorios',
     requiredPermissions: [Permission.READ_REPORTS],
   },
   {
     id: 'admin-dashboard',
     label: 'PAINEL ADMIN',
     icon: 'admin_panel_settings',
-    path: '/admin/dashboard',
+    path: '/ksi/admin/dashboard',
+    allowedRoles: [UserRole.ADMIN, UserRole.DEVS],
+  },
+  {
+    id: 'central-custos',
+    label: 'CENTRAL DE CUSTOS',
+    icon: 'payments',
+    path: '/ksi/admin/central-de-custos',
+    allowedRoles: [UserRole.ADMIN, UserRole.DEVS],
+  },
+  {
+    id: 'monitoramento',
+    label: 'MONITORAMENTO',
+    icon: 'monitor_heart',
+    path: '/ksi/admin/monitoramento',
     allowedRoles: [UserRole.ADMIN, UserRole.DEVS],
   },
   {
     id: 'usuarios',
     label: 'USUÁRIOS',
     icon: 'people',
-    path: '/admin/usuarios',
+    path: '/ksi/admin/usuarios',
     requiredPermissions: [Permission.MANAGE_USERS],
   },
   {
     id: 'permissoes',
     label: 'PERMISSÕES',
     icon: 'security',
-    path: '/admin/permissoes',
+    path: '/ksi/admin/permissoes',
     requiredPermissions: [Permission.MANAGE_PERMISSIONS],
   },
   {
     id: 'configuracoes',
     label: 'CONFIGURAÇÕES',
     icon: 'settings',
-    path: '/configuracoes',
+    path: '/ksi/configuracoes',
   },
 ];
+
+export const franchiseeMenuItems: MenuItem[] = [
+  {
+    id: 'inicio',
+    label: 'INÍCIO',
+    icon: 'home',
+    path: '/franchisee',
+  },
+  {
+    id: 'dashboard',
+    label: 'DASHBOARD',
+    icon: 'dashboard',
+    path: '/franchisee/dashboard',
+  },
+  {
+    id: 'clientes',
+    label: 'CLIENTES',
+    icon: 'people',
+    path: '/franchisee/clientes',
+  },
+  {
+    id: 'consultas',
+    label: 'CONSULTAS',
+    icon: 'search',
+    path: '/franchisee/consultas',
+  },
+  {
+    id: 'relatorios',
+    label: 'RELATÓRIOS',
+    icon: 'assessment',
+    path: '/franchisee/relatorios',
+  },
+  {
+    id: 'parceiros',
+    label: 'PARCEIROS',
+    icon: 'business',
+    path: '/franchisee/parceiros',
+  },
+  {
+    id: 'configuracoes',
+    label: 'CONFIGURAÇÕES',
+    icon: 'settings',
+    path: '/franchisee/configuracoes',
+  },
+];
+
+export const partnerMenuItems: MenuItem[] = [
+  {
+    id: 'inicio',
+    label: 'INÍCIO',
+    icon: 'home',
+    path: '/partner',
+  },
+  {
+    id: 'dashboard',
+    label: 'DASHBOARD',
+    icon: 'dashboard',
+    path: '/partner/dashboard',
+  },
+  {
+    id: 'clientes',
+    label: 'CLIENTES',
+    icon: 'people',
+    path: '/partner/clients',
+  },
+  {
+    id: 'consultas',
+    label: 'CONSULTAS',
+    icon: 'search',
+    path: '/partner/consultas',
+  },
+  {
+    id: 'servicos',
+    label: 'SERVIÇOS',
+    icon: 'build',
+    path: '/partner/services',
+  },
+  {
+    id: 'relatorios',
+    label: 'RELATÓRIOS',
+    icon: 'assessment',
+    path: '/partner/relatorios',
+  },
+  {
+    id: 'suporte',
+    label: 'SUPORTE',
+    icon: 'help_outline',
+    path: '/partner/support',
+  },
+  {
+    id: 'configuracoes',
+    label: 'CONFIGURAÇÕES',
+    icon: 'settings',
+    path: '/partner/configuracoes',
+  },
+];
+
+// Menu padrão (compatibilidade com código existente)
+export const menuItems: MenuItem[] = ksiMenuItems;
 
 export const getFilteredMenuItems = (
   userPermissions: Permission[] = [],
   userRole?: UserRole
 ): MenuItem[] => {
   return menuItems.filter(item => {
+    // Admin KSI tem acesso a TODOS os itens
+    if (userRole === UserRole.ADMIN) {
+      return true;
+    }
+
     if (!item.requiredPermissions && !item.allowedRoles && !item.adminOnly) {
       return true;
     }
 
-    if (item.adminOnly && userRole !== UserRole.ADMIN) {
+    if (item.adminOnly && (userRole as UserRole) !== UserRole.ADMIN) {
       return false;
     }
 
@@ -108,13 +227,32 @@ export const getFilteredMenuItems = (
   });
 };
 
+export const getMenuItemsByEnvironment = (environment: string): MenuItem[] => {
+  switch (environment) {
+    case 'ksi':
+      return ksiMenuItems;
+    case 'franchisee':
+      return franchiseeMenuItems;
+    case 'partner':
+      return partnerMenuItems;
+    default:
+      return ksiMenuItems;
+  }
+};
+
+export const detectEnvironmentFromPath = (pathname: string): string => {
+  if (pathname.startsWith('/franchisee')) return 'franchisee';
+  if (pathname.startsWith('/partner')) return 'partner';
+  return 'ksi';
+};
+
 export const serviceCategories: ServiceCategory[] = [
   {
     id: 'bancario',
     title: 'SERVIÇOS BANCÁRIOS',
     subtitle: 'Relatórios de crédito e análises',
     icon: 'account_balance',
-    path: '/categorias/bancario',
+    path: '/ksi/categorias/bancario',
     serviceCount: 6,
   },
   {
@@ -122,7 +260,7 @@ export const serviceCategories: ServiceCategory[] = [
     title: 'CONSULTAS VEICULARES',
     subtitle: 'ATPV, histórico, débitos',
     icon: 'directions_car',
-    path: '/categorias/veicular',
+    path: '/ksi/categorias/veicular',
     serviceCount: 8,
   },
   {
@@ -130,7 +268,7 @@ export const serviceCategories: ServiceCategory[] = [
     title: 'LOCALIZAÇÃO E BENS',
     subtitle: 'Localizador de pessoas e bens',
     icon: 'location_on',
-    path: '/categorias/localizacao',
+    path: '/ksi/categorias/localizacao',
     serviceCount: 5,
   },
   {
@@ -138,7 +276,7 @@ export const serviceCategories: ServiceCategory[] = [
     title: 'CONSULTAS JURÍDICAS',
     subtitle: 'Antecedentes e ações judiciais',
     icon: 'gavel',
-    path: '/categorias/juridico',
+    path: '/ksi/categorias/juridico',
     serviceCount: 4,
   },
   {
@@ -146,7 +284,7 @@ export const serviceCategories: ServiceCategory[] = [
     title: 'SERVIÇOS COMERCIAIS',
     subtitle: 'Comunicados e negativação',
     icon: 'business',
-    path: '/categorias/comercial',
+    path: '/ksi/categorias/comercial',
     serviceCount: 3,
   },
 ];
@@ -158,7 +296,7 @@ export const dashboardCardsByCategory = {
       title: 'RATING BANCÁRIO',
       subtitle: 'Nexourto de crédits',
       icon: 'description',
-      path: '/consultas/rating-bancario',
+      path: '/ksi/consultas/rating-bancario',
       category: 'bancario',
     },
     {
@@ -166,7 +304,7 @@ export const dashboardCardsByCategory = {
       title: 'RELATÓRIO TOP',
       subtitle: 'Retotoria',
       icon: 'article',
-      path: '/consultas/relatorio-top',
+      path: '/ksi/consultas/relatorio-top',
       category: 'bancario',
     },
     {
@@ -174,7 +312,7 @@ export const dashboardCardsByCategory = {
       title: 'RELATÓRIO KSI MASTER',
       subtitle: 'Relatório analítico de crédito',
       icon: 'star',
-      path: '/consultas/relatorio-ksi-master',
+      path: '/ksi/consultas/relatorio-ksi-master',
       category: 'bancario',
     },
     {
@@ -182,7 +320,7 @@ export const dashboardCardsByCategory = {
       title: 'GOLD',
       subtitle: 'Reneira crédito',
       icon: 'shield',
-      path: '/consultas/gold-reneira',
+      path: '/ksi/consultas/gold-reneira',
       category: 'bancario',
     },
     {
@@ -190,7 +328,7 @@ export const dashboardCardsByCategory = {
       title: 'SCR - BANCO CENTRAL',
       subtitle: 'Relatório analítico de crédito',
       icon: 'account_balance',
-      path: '/consultas/scr-banco-central',
+      path: '/ksi/consultas/scr-banco-central',
       category: 'bancario',
     },
     {
@@ -198,7 +336,7 @@ export const dashboardCardsByCategory = {
       title: 'RELATÓRIO PLUS PF',
       subtitle: 'Relatório analítico de crédito - Plus PF',
       icon: 'person',
-      path: '/consultas/relatorio-plus-pf',
+      path: '/ksi/consultas/relatorio-plus-pf',
       category: 'bancario',
     },
   ],
@@ -209,7 +347,7 @@ export const dashboardCardsByCategory = {
       title: 'ATPV ONLINE',
       subtitle: 'Vsicolar compreiruretus',
       icon: 'local_shipping',
-      path: '/consultas/atpv-online',
+      path: '/ksi/consultas/atpv-online',
       category: 'veicular',
     },
     {
@@ -217,7 +355,7 @@ export const dashboardCardsByCategory = {
       title: 'VEICULAR COMPLETA',
       subtitle: 'Veicular - Veicular completa',
       icon: 'directions_car',
-      path: '/consultas/veicular-completa',
+      path: '/ksi/consultas/veicular-completa',
       category: 'veicular',
     },
     {
@@ -225,7 +363,7 @@ export const dashboardCardsByCategory = {
       title: 'HISTÓRICO DE PROPRIETÁRIO',
       subtitle: 'Comuiimersor du venitio',
       icon: 'history',
-      path: '/consultas/historico-proprietario-1',
+      path: '/ksi/consultas/historico-proprietario-1',
       category: 'veicular',
     },
     {
@@ -233,7 +371,7 @@ export const dashboardCardsByCategory = {
       title: 'DENATRAN PLUS',
       subtitle: 'De xirion puins',
       icon: 'local_shipping',
-      path: '/consultas/denatran-plus',
+      path: '/ksi/consultas/denatran-plus',
       category: 'veicular',
     },
     {
@@ -241,7 +379,7 @@ export const dashboardCardsByCategory = {
       title: 'ATPV - RENAINF',
       subtitle: 'Vsiocial ATHV',
       icon: 'commute',
-      path: '/consultas/atpv-renainf',
+      path: '/ksi/consultas/atpv-renainf',
       category: 'veicular',
     },
     {
@@ -249,7 +387,7 @@ export const dashboardCardsByCategory = {
       title: 'VEICULAR CAUTELAR',
       subtitle: 'Veicular Cautelar',
       icon: 'security',
-      path: '/consultas/veicular-cautelar',
+      path: '/ksi/consultas/veicular-cautelar',
       category: 'veicular',
     },
   ],
@@ -260,7 +398,7 @@ export const dashboardCardsByCategory = {
       title: 'LOCALIZADOR DE BENS',
       subtitle: 'Reqóira condals',
       icon: 'location_on',
-      path: '/consultas/localizador-bens',
+      path: '/ksi/consultas/localizador-bens',
       category: 'localizacao',
     },
     {
@@ -268,7 +406,7 @@ export const dashboardCardsByCategory = {
       title: 'INFOBUSCA POR NOME',
       subtitle: 'Localizador - Infobusca por Nome',
       icon: 'person_search',
-      path: '/consultas/infobusca-nome',
+      path: '/ksi/consultas/infobusca-nome',
       category: 'localizacao',
     },
     {
@@ -276,7 +414,7 @@ export const dashboardCardsByCategory = {
       title: 'INFOBUSCA POR CPF CNPJ',
       subtitle: 'Localizador - Infobusca por CPF/CNPJ',
       icon: 'badge',
-      path: '/consultas/infobusca-cpf',
+      path: '/ksi/consultas/infobusca-cpf',
       category: 'localizacao',
     },
     {
@@ -284,7 +422,7 @@ export const dashboardCardsByCategory = {
       title: 'LOCALIZADOR POR TELEFONE',
       subtitle: 'Localizador - Telefone',
       icon: 'phone',
-      path: '/consultas/localizador-telefone',
+      path: '/ksi/consultas/localizador-telefone',
       category: 'localizacao',
     },
     {
@@ -292,7 +430,7 @@ export const dashboardCardsByCategory = {
       title: 'LOCALIZADOR DE VEICULO',
       subtitle: 'CPF/CNPJ - Base DETRAN',
       icon: 'car_rental',
-      path: '/consultas/localizador-veiculo',
+      path: '/ksi/consultas/localizador-veiculo',
       category: 'localizacao',
     },
   ],
@@ -303,7 +441,7 @@ export const dashboardCardsByCategory = {
       title: 'ANTECEDENTE CRIMINAL',
       subtitle: 'Amesadietra Chimmt',
       icon: 'warning',
-      path: '/consultas/antecedente-criminal',
+      path: '/ksi/consultas/antecedente-criminal',
       category: 'juridico',
     },
     {
@@ -311,7 +449,7 @@ export const dashboardCardsByCategory = {
       title: 'AÇÃO TRABALHISTA',
       subtitle: 'Apjad ittaiaimeo',
       icon: 'work',
-      path: '/consultas/acao-trabalhista',
+      path: '/ksi/consultas/acao-trabalhista',
       category: 'juridico',
     },
     {
@@ -319,7 +457,7 @@ export const dashboardCardsByCategory = {
       title: 'AÇÕES JUDICIAIS',
       subtitle: 'Localizador - Ações Judiciais',
       icon: 'gavel',
-      path: '/consultas/acoes-judiciais',
+      path: '/ksi/consultas/acoes-judiciais',
       category: 'juridico',
     },
     {
@@ -327,7 +465,7 @@ export const dashboardCardsByCategory = {
       title: 'PROTESTO ONLINE',
       subtitle: 'Protesto Online',
       icon: 'warning',
-      path: '/consultas/protesto-online',
+      path: '/ksi/consultas/protesto-online',
       category: 'juridico',
     },
   ],
@@ -338,7 +476,7 @@ export const dashboardCardsByCategory = {
       title: 'COMUNICADO DE VENDAS',
       subtitle: 'Vsiolar comprete',
       icon: 'event_note',
-      path: '/consultas/comunicado-vendas',
+      path: '/ksi/consultas/comunicado-vendas',
       category: 'comercial',
     },
     {
@@ -346,7 +484,7 @@ export const dashboardCardsByCategory = {
       title: 'NEGATIVAÇÃO ONLINE',
       subtitle: 'Negativação Online',
       icon: 'block',
-      path: '/consultas/negativacao-online',
+      path: '/ksi/consultas/negativacao-online',
       category: 'comercial',
     },
     {
@@ -354,7 +492,7 @@ export const dashboardCardsByCategory = {
       title: 'CHEQUE ROUBADO E SUSTADO',
       subtitle: 'Cheque roubado e sustado',
       icon: 'receipt',
-      path: '/consultas/cheque-roubado',
+      path: '/ksi/consultas/cheque-roubado',
       category: 'comercial',
     },
   ],

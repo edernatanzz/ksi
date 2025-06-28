@@ -166,26 +166,47 @@ describe('Permission Cache', () => {
 });
 
 describe('Permission Logger', () => {
-  it('should log permission checks', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    permissionCache.clear();
+    permissionLogger.clearLogs();
+  });
+
+  it('should log permission checks', async () => {
+    // Arrange
     const userPermissions = [Permission.READ_DASHBOARD];
+    
+    // Act
     permissionManager.hasPermission(Permission.READ_DASHBOARD, userPermissions);
     const logs = permissionLogger.getLogs();
+    
+    // Assert
     expect(logs.length).toBeGreaterThan(0);
     expect(logs[0].permission).toBe(Permission.READ_DASHBOARD);
   });
 
-  it('should filter logs by user', () => {
-    permissionLogger.log('user1', Permission.READ_DASHBOARD, true);
-    permissionLogger.log('user2', Permission.READ_DASHBOARD, true);
+  it('should filter logs by user', async () => {
+    // Arrange
+    await permissionLogger.log('user1', Permission.READ_DASHBOARD, true);
+    await permissionLogger.log('user2', Permission.READ_DASHBOARD, true);
+    
+    // Act
     const userLogs = permissionLogger.getLogsByUser('user1');
+    
+    // Assert
     expect(userLogs.length).toBe(1);
     expect(userLogs[0].userId).toBe('user1');
   });
 
-  it('should filter logs by permission', () => {
-    permissionLogger.log('user1', Permission.READ_DASHBOARD, true);
-    permissionLogger.log('user1', Permission.MANAGE_SYSTEM, true);
+  it('should filter logs by permission', async () => {
+    // Arrange
+    await permissionLogger.log('user1', Permission.READ_DASHBOARD, true);
+    await permissionLogger.log('user1', Permission.MANAGE_SYSTEM, true);
+    
+    // Act
     const permissionLogs = permissionLogger.getLogsByPermission(Permission.READ_DASHBOARD);
+    
+    // Assert
     expect(permissionLogs.length).toBe(1);
     expect(permissionLogs[0].permission).toBe(Permission.READ_DASHBOARD);
   });

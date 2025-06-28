@@ -90,12 +90,12 @@ export const ROLE_HIERARCHY = {
 
 // permissões por role
 export const getPermissionsByRole = (role: UserRole): Permission[] => {
-  return ROLE_PERMISSIONS[role] || [];
+  return ROLE_PERMISSIONS[role as keyof typeof ROLE_PERMISSIONS] || [];
 };
 
 // permissão específica
 export const roleHasPermission = (role: UserRole, permission: Permission): boolean => {
-  return ROLE_PERMISSIONS[role]?.includes(permission) || false;
+  return ROLE_PERMISSIONS[role as keyof typeof ROLE_PERMISSIONS]?.includes(permission) || false;
 };
 
 // Categorias acessíveis por role

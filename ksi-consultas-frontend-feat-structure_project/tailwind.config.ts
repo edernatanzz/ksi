@@ -15,6 +15,7 @@ const ksiColors = {
     900: '#7f1d1d',
   },
   secondary: {
+    25: '#FFFCF9', //Branco principal menos rosa
     50: '#fdf6ef', // Branco principal
     100: '#f1f5f9',
     200: '#e2e8f0',

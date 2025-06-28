@@ -1,9 +1,7 @@
 'use client'
 import React, { useState } from 'react'
-import { menuItems } from '@/data/dashboard'
 import Sidebar from '@/components/molecules/Sidebar/Sidebar'
 import { useAuth } from '@/contexts/AuthContext'
-import LoginPage from '../LoginPage/LoginPage'
 
 interface MainLayoutProps {
   children: React.ReactNode
@@ -35,7 +33,6 @@ const DesktopSidebar: React.FC = () => (
     className="hidden lg:block w-[275px] h-full shrink-0"
   >
     <Sidebar
-      menuItems={menuItems}
       isOpen={true}
       onClose={() => {}}
     />
@@ -49,7 +46,6 @@ const MobileSidebar: React.FC<{
 }> = ({ isOpen, onClose }) => (
   <div className="lg:hidden">
     <Sidebar
-      menuItems={menuItems}
       isOpen={isOpen}
       onClose={onClose}
     />
@@ -103,10 +99,12 @@ const DashboardLayout: React.FC<{
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isAuthenticated } = useAuth()
 
+  // Se não está autenticado, renderiza as children diretamente (para permitir a página de login)
   if (!isAuthenticated) {
-    return <LoginPage />
+    return <>{children}</>
   }
 
+  // Se está autenticado, usa o layout do dashboard
   return <DashboardLayout>{children}</DashboardLayout>
 }
 

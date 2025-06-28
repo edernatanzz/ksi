@@ -18,7 +18,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
   children,
   requiredPermissions = [],
   allowedRoles = [],
-  fallbackPath = '/login',
+  fallbackPath = '/',
   showAccessDenied = true
 }) => {
   const { isAuthenticated, canAccess, loading, user } = useAuth();
@@ -32,6 +32,11 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
       return;
     }
 
+    // Admin tem acesso TOTAL e IRRESTRITO - pula todas as validações
+    if (user?.role === UserRole.ADMIN) {
+      return;
+    }
+
     if (requiredPermissions.length > 0 && !canAccess(requiredPermissions)) {
       if (showAccessDenied) {
         toast.error('Acesso negado: você não tem permissão para acessar esta página');
@@ -39,7 +44,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
       router.back(); 
       return;
     }
-  }, [loading, isAuthenticated, canAccess, requiredPermissions, router, fallbackPath, showAccessDenied]);
+  }, [loading, isAuthenticated, canAccess, requiredPermissions, router, fallbackPath, showAccessDenied, user]);
 
   if (loading) {
     return (
@@ -47,6 +52,11 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
       </div>
     );
+  }
+
+  // Admin tem acesso TOTAL e IRRESTRITO - pula todas as validações
+  if (user?.role === UserRole.ADMIN) {
+    return <>{children}</>;
   }
 
   if (!isAuthenticated || (requiredPermissions.length > 0 && !canAccess(requiredPermissions))) {

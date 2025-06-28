@@ -2,6 +2,8 @@
 import React from 'react'
 import DashboardCard from '@/components/molecules/DashboardCard/DashboardCard'
 import { dashboardCardsByCategory, serviceCategories } from '@/data/dashboard'
+import { filterServicesByPermissions } from '@/utils/dashBoardPermissions'
+import { useAuth } from '@/contexts/AuthContext'
 import Button from '@/components/atoms/Button/Button'
 import Breadcrumb from '@/components/molecules/Breadcrumb/Breadcrumb'
 
@@ -10,8 +12,12 @@ interface CategoryDashboardProps {
 }
 
 export const CategoryDashboard: React.FC<CategoryDashboardProps> = ({ categoryId }) => {
+  const { user } = useAuth()
   const currentCategory = serviceCategories.find(cat => cat.id === categoryId)
-  const categoryServices = dashboardCardsByCategory[categoryId as keyof typeof dashboardCardsByCategory] || []
+  const allCategoryServices = dashboardCardsByCategory[categoryId as keyof typeof dashboardCardsByCategory] || []
+  
+  // Filtrar serviços com base nas permissões do usuário
+  const categoryServices = filterServicesByPermissions(allCategoryServices, user?.permissions || [], user?.role)
 
   if (!currentCategory) {
     return (

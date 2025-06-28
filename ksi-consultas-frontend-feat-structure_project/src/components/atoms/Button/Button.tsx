@@ -2,8 +2,9 @@
 import React, { forwardRef } from 'react'
 import { CircularProgress } from '@mui/material'
 import styles from './Button.module.scss'
+import { LucideIcon } from 'lucide-react'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info'
+export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info' | 'outline' | 'ghost' | 'icon'
 export type ButtonSize = 'small' | 'medium' | 'large' | 'extra-large'
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -15,6 +16,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   startIcon?: React.ReactNode
   endIcon?: React.ReactNode
   children?: React.ReactNode
+  icon?: LucideIcon
+  iconPosition?: 'left' | 'right'
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -29,6 +32,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     children,
     className = '',
     disabled,
+    icon: Icon,
+    iconPosition = 'left',
     ...props
   }, ref) => {
     const buttonClasses = [
@@ -56,6 +61,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             className={styles['ksi-button__spinner']}
             sx={{ color: 'inherit' }}
           />
+        )}
+        {!loading && Icon && iconPosition === 'left' && (
+          <Icon size={size === 'small' ? 16 : size === 'large' ? 20 : 18} />
         )}
         {!loading && startIcon && (
           <span className={styles['ksi-button__start-icon']}>

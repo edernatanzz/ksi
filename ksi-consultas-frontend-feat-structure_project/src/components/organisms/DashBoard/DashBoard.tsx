@@ -25,7 +25,7 @@ export const Dashboard: React.FC = () => {
   const { user } = useAuth();
 
   const handleCategoryClick = (categoryId: string) => {
-    if(canAccessCategory(categoryId, user?.permissions || [])) {
+    if(canAccessCategory(categoryId, user?.permissions || [], user?.role)) {
       setCurrentCategory(categoryId)
       setSearchQuery('')}
   }
@@ -66,7 +66,7 @@ export const Dashboard: React.FC = () => {
     
     if (isSearching && currentCategory === null) {
       const allResults = searchAllServices(searchQuery)
-      const filteredResults = filterServicesByPermissions(allResults, user?.permissions || [])
+      const filteredResults = filterServicesByPermissions(allResults, user?.permissions || [], user?.role)
       data = filteredResults.map(service => ({
         id: service.id,
         title: service.title as string,
@@ -77,15 +77,17 @@ export const Dashboard: React.FC = () => {
       }))
     } else if (isSearching && currentCategory) {
       const categoryServices = dashboardCardsByCategory[currentCategory as keyof typeof dashboardCardsByCategory] || []
-      data = categoryServices.filter(service => {
+      const filteredServices = filterServicesByPermissions(categoryServices, user?.permissions || [], user?.role)
+      data = filteredServices.filter(service => {
         const titleMatch = service.title.toLowerCase().includes(searchQuery.toLowerCase())
         const subtitleMatch = service.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
         return titleMatch || subtitleMatch
       })
     } else if (currentCategory) {
-      data = dashboardCardsByCategory[currentCategory as keyof typeof dashboardCardsByCategory] || []
+      const categoryServices = dashboardCardsByCategory[currentCategory as keyof typeof dashboardCardsByCategory] || []
+      data = filterServicesByPermissions(categoryServices, user?.permissions || [], user?.role)
     } else {
-      const categories = filterCategoriesByPermissions(serviceCategories, user?.permissions || [])
+      const categories = filterCategoriesByPermissions(serviceCategories, user?.permissions || [], user?.role)
       data = categories.map(category => ({
         id: category.id,
         title: category.title,
@@ -101,7 +103,7 @@ export const Dashboard: React.FC = () => {
       isMainView: isMainViewCalc,
       isSearchMode: isSearching
     }
-  }, [searchQuery, currentCategory, user?.permissions])
+  }, [searchQuery, currentCategory, user?.permissions, user?.role])
 
   const getPageTitle = () => {
     if (isMainView) {

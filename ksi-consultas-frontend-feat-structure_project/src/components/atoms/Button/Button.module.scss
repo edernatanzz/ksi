@@ -146,6 +146,56 @@ $shadows: (
     }
   }
 
+  &--ghost {
+    background-color: transparent;
+    border: 1px solid transparent;
+
+    &:not(:disabled):hover {
+      background-color: #f3f4f6; /* Tailwind gray-100 */
+      box-shadow: none;
+    }
+
+    &:not(:disabled):active {
+      background-color: #e5e7eb; /* Tailwind gray-200 */
+      transform: none; /* Removido transform para manter consistência */
+    }
+  }
+
+  &--outline {
+    background-color: transparent;
+    color: #4b5563; /* Tailwind gray-600 */
+    border: 1px solid #d1d5db; /* Tailwind gray-300 */
+
+    &:not(:disabled):hover {
+      background-color: #f3f4f6; /* Tailwind gray-100 */
+      color: #1f2937; /* Tailwind gray-900 */
+      border-color: #9ca3af; /* Tailwind gray-400 */
+      box-shadow: shadow(sm);
+    }
+
+    &:not(:disabled):active {
+      background-color: #e5e7eb; /* Tailwind gray-200 */
+      border-color: #6b7280; /* Tailwind gray-500 */
+    }
+  }
+
+  &--icon {
+    background-color: transparent;
+    color: #4b5563; /* Tailwind gray-600 */
+    border: none;
+
+    &:not(:disabled):hover {
+      background-color: #f3f4f6; /* Tailwind gray-100 */
+      box-shadow: none;
+      transform: none; /* Remove transform on hover for icon-only */
+    }
+
+    &:not(:disabled):active {
+      background-color: #e5e7eb; /* Tailwind gray-200 */
+      transform: none; /* Remove transform on active for icon-only */
+    }
+  }
+
   // Sizes
   &--small {
     padding: spacing(2) spacing(3);
